@@ -1,4 +1,5 @@
 const express = require('express');
+const slugify = require('slugify');
 const router = new express.Router();
 const db = require('../db');
 const ExpressError = require('../expressError')
@@ -45,11 +46,16 @@ router.get('/:code', async function (req, res, next) {
 
 router.post('/', async function (req, res, next) {
   try {
+    let { name, description } = req.body;
+    let code = slugify(name, {
+      lower: true,
+      strict: true
+    });
     const query = await db.query(
       `INSERT INTO companies (code, name, description)
        VALUES ($1, $2, $3)
        RETURNING code, name, description`,
-      [req.body.code, req.body.name, req.body.description]
+      [code, name, description]
     );
 
     return res.status(201).json({ company: query.rows[0] });  // 201 CREATED
@@ -75,7 +81,7 @@ router.put('/:code', async function (req, res, next) {
     if (query.rows.length === 0)
       throw new ExpressError(`There is no company with code '${req.params.code}'`, 404);
 
-    return res.status(201).json({ company: query.rows[0] });  // 201 CREATED
+    return res.status(200).json({ company: query.rows[0] });  // 201 CREATED
   } catch (err) {
     return next(err);
   }

@@ -97,7 +97,7 @@ router.put('/:id', async function (req, res, next) {
       [amt, paid, paid_date, req.params.id]
     );
 
-    return res.status(201).json({ invoice: update.rows[0] });  // 201 CREATED
+    return res.status(200).json({ invoice: update.rows[0] });  // 201 CREATED
   } catch (err) {
     return next(err);
   }
@@ -108,7 +108,7 @@ router.delete('/:id', async function (req, res, next) {
     const query = await db.query(
       `DELETE FROM invoices
        WHERE id = $1
-       RETURNING code`, [req.params.id]
+       RETURNING id`, [req.params.id]
     );
 
     if (query.rows.length === 0)
