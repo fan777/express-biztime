@@ -19,25 +19,19 @@ router.get('/', async function (req, res, next) {
 
 router.get('/:code', async function (req, res, next) {
   try {
-    const compQuery = await db.query(
-      `SELECT code, name, description
+    const query = await db.query(
+      `SELECT code, name, description, id
        FROM companies
+       JOIN invoices ON code = comp_code
        WHERE code = $1`, [req.params.code]
     );
 
-    if (compQuery.rows.length === 0)
+    if (query.rows.length === 0)
       throw new ExpressError(`There is no company with code '${req.params.code}'`, 404);
 
-    const invQuery = await db.query(
-      `SELECT id 
-       FROM invoices
-       WHERE comp_code = $1`, [req.params.code]
-    );
-
-    const company = compQuery.rows[0];
-    const invoices = invQuery.rows;
-    company.invoices = invoices.map(inv => inv.id);
-
+    const company = (({ code, name, description }) => ({ code, name, description }))(query.rows[0]);
+    company.invoices = query.rows.map(inv => inv.id);
+    console.log(company);
     return res.json({ company: company });
   } catch (err) {
     return next(err);
@@ -51,6 +45,7 @@ router.post('/', async function (req, res, next) {
       lower: true,
       strict: true
     });
+
     const query = await db.query(
       `INSERT INTO companies (code, name, description)
        VALUES ($1, $2, $3)
